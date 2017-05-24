@@ -38,5 +38,6 @@
 	</build>
 	<modules>
 		<module>rule-extraction</module>
+		<module>chunker</module>
 	</modules>
 </project>

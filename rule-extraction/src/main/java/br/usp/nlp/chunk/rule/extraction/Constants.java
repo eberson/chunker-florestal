@@ -20,6 +20,8 @@ public final class Constants {
 	
 	public static final String REGEX_GRAMATICAL_CHECK = "^.*:(n|prop|adj|n-adj|v-fin|v-inf|v-pcp|v-ger|art|pron-pers|pron-det|pron-indp|adv|num|prp|intj|conj-s|conj-c)\\(.*";
 	public static final String REGEX_GRAMATICAL_EXTRACT = "(?<=:).*(?=\\()";
-	public static final String REGEX_TAGGER_EXTRACT = ":"+REGEX_ONLY_GRAMATICAL+"\\(.*\\).*?([a-zA-Zà-úÀ-Ú_\\-:0-9%]{1,})";
+	
+	public static final String REGEX_POTENTIAL_WORD = "[a-zA-Zà-úÀ-Ú_\\-:0-9%]{1,}";
+	public static final String REGEX_TAGGER_EXTRACT = ":"+REGEX_ONLY_GRAMATICAL+"\\(.*\\).*?("+REGEX_POTENTIAL_WORD+")";
 
 }

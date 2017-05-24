@@ -4,6 +4,9 @@ import static br.usp.nlp.chunk.rule.extraction.Constants.LINE_SEPARATOR;
 import static br.usp.nlp.chunk.rule.extraction.Constants.PHRASE_TYPE_REGEX;
 import static br.usp.nlp.chunk.rule.extraction.Constants.SENTENCE_END;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -19,21 +22,50 @@ public class TaggerExtractor {
 	
 	private static final String LEVEL_REGEX = "={1,}";
 	
+	public void createCorpus(String sourceFile){
+		Set<String> rules = generate(sourceFile);
+		
+		StringBuilder taggedPhrase = new StringBuilder();
+		StringBuilder npPhrase = new StringBuilder();
+		
+		for (String rule : rules){
+			taggedPhrase.append(makeTaggedPhrase(rule)).append(" .").append(Constants.LINE_SEPARATOR);
+			npPhrase.append(makeNPPhrase(rule)).append(" .").append(Constants.LINE_SEPARATOR);
+		}
+		
+		try {
+			Files.write(Paths.get("C:/java/tagged_phrase.txt"), taggedPhrase.toString().getBytes());
+			Files.write(Paths.get("C:/java/np_phrase.txt"), npPhrase.toString().getBytes());
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+	}
+	
+	private String makeTaggedPhrase(String rule) {
+		return rule.replaceAll("np\\[", "")
+				   .replaceAll("\\[|\\]", "")
+				   .replaceAll("\\s{2,}", " ");
+	}
+	
+	private String makeNPPhrase(String rule) {
+		return rule.replaceAll("_" + Constants.REGEX_ONLY_GRAMATICAL, "")
+	               .replaceAll("\\[,\\]", ",")
+	               .replaceAll("\\s{1,}\\]", "]")
+	               .replaceAll("\\s{2,}", " ");
+	}
+
+
 	public Set<String> generate(String sourceFile){
-		return generate(sourceFile, null);
-	}
-
-	public Set<String> generate(String sourceFile, RuleFilter filter){
-		return generate(sourceFile, null, null);
-	}
-
-	public Set<String> generate(String sourceFile, RuleFilter filter, Normalizer normalizer){
 		Set<String> rules = Collections.synchronizedSet(new TreeSet<>());
 		
 		List<Node> nodes = createRuleNodes(sourceFile);
 		
 		nodes.parallelStream().forEach(node -> {
-			rules.add(node.generatePhrase() + Constants.LINE_SEPARATOR);
+			String phrase = node.generatePhrase().trim();
+			
+			if (!phrase.isEmpty()){
+				rules.add(phrase + Constants.LINE_SEPARATOR);
+			}
 		});
 		
 		return rules;
@@ -127,21 +159,6 @@ public class TaggerExtractor {
 		return null;
 	}
 	
-	@SuppressWarnings("unused")
-	private void createRule(Node node) {
-//		print(node);
-		System.out.println(node.generateRule());
-	}
-	
-	@SuppressWarnings("unused")
-	private void print(Node node){
-		System.out.printf("%s %s\n", String.join("", Collections.nCopies(node.getLevel(), "=")), node.getValue());
-		
-		for(Node child : node.getChildren()){
-			print(child);
-		}
-	}
-	
 	private List<String> readSentences(String sourceFile){
 		SentenceReader reader = new SentenceReader();
 		return reader.read(sourceFile);
@@ -150,35 +167,10 @@ public class TaggerExtractor {
 	public static void main(String[] args) {
 		TaggerExtractor gen = new TaggerExtractor();
 		
-		RuleFilter filter = (rule) -> {
-			String content = rule.substring(rule.indexOf(">") + 1);
-			
-			String[] split = content.trim()
-					.replaceAll("\\[,\\]", "[@]")
-					.replaceAll("\\.", "").split(",");
-			
-			for(String value : split){
-				if (!value.trim().matches(Constants.REGEX_ONLY_GRAMATICAL) &&
-						!value.trim().matches("\\[.\\]")){
-					return false;
-				}
-			}
-			
-			return true;
-		};
+        gen.createCorpus("Bosque_CF_8.0.ad.txt");
 		
-		Normalizer normalizer = (rule) -> {
-			return rule.replaceAll(", \\[.\\]", "");
-		};
-		
-		Set<String> rules = gen.generate("Bosque_CF_8.0.ad.txt");
-		
-		rules.stream().forEach(System.out::println);
-		
-//		rules.stream().forEach(rule -> {
-//			if (rule.startsWith("np -->")){
-//				System.out.println(rule);
-//			}
-//		});
+//		Set<String> rules = gen.generate("Bosque_CF_8.0.ad.txt");
+//		
+//		rules.stream().forEach(System.out::println);
 	}
 }

@@ -95,7 +95,7 @@ public class Node implements Serializable {
 		
 		String value = getValue();
 		
-		if (!value.matches(Constants.REGEX_SYNTAGMAS_EXCEPT_NP)){
+		if (!value.matches(Constants.REGEX_SYNTAGMAS_EXCEPT_NP) && !"SENTENCA".equals(value)){
 			builder.append(value);
 		}
 		

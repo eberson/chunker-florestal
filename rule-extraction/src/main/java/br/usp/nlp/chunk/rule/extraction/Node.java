@@ -90,6 +90,33 @@ public class Node implements Serializable {
 		return builder.toString();
 	}
 
+	public String generatePhrase() {
+		StringBuilder builder = new StringBuilder();
+		
+		String value = getValue();
+		
+		if (!value.matches(Constants.REGEX_SYNTAGMAS_EXCEPT_NP)){
+			builder.append(value);
+		}
+		
+		if (hasChildren() && value.equals("np")){
+			builder.append("[");
+		}
+		else{
+			builder.append(" ");
+		}
+		
+		for (Node node : children) {
+			builder.append(node.generatePhrase());
+		}
+		
+		if (hasChildren() && value.equals("np")){
+			builder.append("] ");
+		}
+		
+		return builder.toString();
+	}
+
 	@Override
 	public String toString() {
 		return generateRule();

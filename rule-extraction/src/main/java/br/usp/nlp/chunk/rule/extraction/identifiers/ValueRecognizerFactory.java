@@ -10,6 +10,7 @@ public final class ValueRecognizerFactory {
 	}
 	
 	private static final List<ValueRecognizer> ALL_RECOGNIZERS = new ArrayList<>();
+	private static final List<ValueRecognizer> TAGGER_RECOGNIZERS = new ArrayList<>();
 	
 	public static synchronized List<ValueRecognizer> getAllRecognizers(){
 		if (ALL_RECOGNIZERS.isEmpty()){
@@ -19,6 +20,16 @@ public final class ValueRecognizerFactory {
 		}
 		
 		return ALL_RECOGNIZERS;
+	}
+	
+	public static synchronized List<ValueRecognizer> getTaggersRecognizers(){
+		if (TAGGER_RECOGNIZERS.isEmpty()){
+			TAGGER_RECOGNIZERS.add(new Syntagma());
+			TAGGER_RECOGNIZERS.add(new GramaticalTagger());
+			TAGGER_RECOGNIZERS.add(new PunctuationCategory());
+		}
+		
+		return TAGGER_RECOGNIZERS;
 	}
 	
 	

@@ -11,6 +11,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 public class SentenceReader {
@@ -88,11 +90,29 @@ public class SentenceReader {
 
 	public static void main(String[] args) {
 		
-		SentenceReader reader = new SentenceReader();
-		List<String> sentences = reader.read("Bosque_CF_8.0.ad.reduzido.txt");
+//		SentenceReader reader = new SentenceReader();
+//		List<String> sentences = reader.read("Bosque_CF_8.0.ad.reduzido.txt");
+//		
+//		System.out.println(String.format("%d sentenças lidas", sentences.size()));
+//		System.out.println(sentences.get(0));
 		
-		System.out.println(String.format("%d sentenças lidas", sentences.size()));
-		System.out.println(sentences.get(0));
+		String[] values = { "=SUBJ:np",
+				            "==H:prop('PT' M S)	PT",
+				            "=SA:pp",
+				            "==H:prp('em' <sam->)	em",
+				            "==P<:np",
+				            "===>N:art('o' <-sam> <artd> M S)	o",
+				            "===H:n('governo' M S)	governo",};
+		
+		String regex = ":(prop|prp|art|n|v-pcp)\\(.*\\).*?([a-zA-Z]{1,})";
+		
+		for (String value : values) {
+			Matcher matcher = Pattern.compile(regex).matcher(value);
+			
+			if (matcher.find()){
+				System.out.printf("%s_%s ", matcher.group(2), matcher.group(1));
+			}
+		}
 	}
 
 }

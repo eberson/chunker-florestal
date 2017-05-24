@@ -15,7 +15,7 @@ import java.util.regex.Pattern;
 import br.usp.nlp.chunk.rule.extraction.identifiers.ValueRecognizer;
 import br.usp.nlp.chunk.rule.extraction.identifiers.ValueRecognizerFactory;
 
-public class RuleExtractor {
+public class TaggerExtractor {
 	
 	private static final String LEVEL_REGEX = "={1,}";
 	
@@ -33,36 +33,7 @@ public class RuleExtractor {
 		List<Node> nodes = createRuleNodes(sourceFile);
 		
 		nodes.parallelStream().forEach(node -> {
-			String generated = node.generateRule();
-			
-			if (generated == null || generated.isEmpty()){
-				return;
-			}
-			
-			String[] generatedRules = generated.split(LINE_SEPARATOR);
-			
-			for (String rule : generatedRules) {
-				if (filter != null){
-					if (filter.accept(rule)){
-						if (normalizer != null){
-							rules.add(normalizer.normalize(rule));
-						}
-						else{
-							rules.add(rule);
-						}
-						
-					}
-					
-					continue;
-				}
-				
-				if (normalizer != null){
-					rules.add(normalizer.normalize(rule));
-				}
-				else{
-					rules.add(rule);
-				}
-			}
+			rules.add(node.generatePhrase() + Constants.LINE_SEPARATOR);
 		});
 		
 		return rules;
@@ -145,7 +116,7 @@ public class RuleExtractor {
 	}
 	
 	private String getValue(String line){
-		for (ValueRecognizer recognizer : ValueRecognizerFactory.getAllRecognizers()) {
+		for (ValueRecognizer recognizer : ValueRecognizerFactory.getTaggersRecognizers()) {
 			if (!recognizer.apply(line)){
 				continue;
 			}
@@ -177,7 +148,7 @@ public class RuleExtractor {
 	}
 	
 	public static void main(String[] args) {
-		RuleExtractor gen = new RuleExtractor();
+		TaggerExtractor gen = new TaggerExtractor();
 		
 		RuleFilter filter = (rule) -> {
 			String content = rule.substring(rule.indexOf(">") + 1);
@@ -200,14 +171,14 @@ public class RuleExtractor {
 			return rule.replaceAll(", \\[.\\]", "");
 		};
 		
-		Set<String> rules = gen.generate("Bosque_CF_8.0.ad.txt", 
-				                         filter, 
-				                         normalizer);
+		Set<String> rules = gen.generate("Bosque_CF_8.0.ad.txt");
 		
-		rules.stream().forEach(rule -> {
-			if (rule.startsWith("np -->")){
-				System.out.println(rule);
-			}
-		});
+		rules.stream().forEach(System.out::println);
+		
+//		rules.stream().forEach(rule -> {
+//			if (rule.startsWith("np -->")){
+//				System.out.println(rule);
+//			}
+//		});
 	}
 }

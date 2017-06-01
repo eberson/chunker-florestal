@@ -2,41 +2,56 @@
 <ext id=1 cad="Opinião" sec="opi" sem="94a">
 <s>
 
-SOURCE: CETENFolha n=616 cad="Mundo" sec="pol" sem="94b"
-CF616-2 No processo que seguiu à derrubada da ditadura, o poder caiu na rua.
+SOURCE: CETENFolha n=344 cad="Esporte" sec="des" sem="94b"
+CF344-3 « Foi ótimo, você fez um minuto melhor do que o esperado», disse a Medeiros ao cruzar a linha de chegada.
 A1
 STA:fcl
-=ADVL:pp
-==H:prp('em' <sam->)	Em
-==P<:np
-===>N:art('o' <-sam> <artd> M S)	o
-===H:n('processo' <np-def> M S)	processo
-===N<:fcl
-====SUBJ:np
-=====H:pron-indp('que' <rel> M S)	que
-====P:vp
-=====MV:v-fin('seguir' <fs-rel> PS 3S IND)	seguiu
-====PIV:pp
-=====H:prp('a' <sam->)	a
-=====P<:np
-======>N:art('o' <-sam> <artd> F S)	a
-======H:n('derrubada' <np-def> F S)	derrubada
-======N<ARGO:pp
-=======H:prp('de' <sam->)	de
-=======P<:np
-========>N:art('o' <-sam> <artd> F S)	a
-========H:n('ditadura' <np-def> F S)	ditadura
+=ACC:cu
+==«
+==CJT:fcl
+===P:vp
+====MV:v-fin('ser' <fs-subst> <nosubj> PS 3S IND)	Foi
+===SC:adjp
+====H:adj('bom' <SUP> M S)	ótimo
+==,
+==CJT:fcl
+===SUBJ:np
+====H:pron-pers('você' M/F 3S NOM)	você
+===P:vp
+====MV:v-fin('fazer' PS 3S IND)	fez
+===ACC:np
+====>N:num('um' <card> M S)	um
+====H:n('minuto' M S)	minuto
+====N<:adjp
+=====H:adj('bom' <KOMP> <SUP> M S)	melhor
+=====KOMP<:acl
+======COM:conj-s('do_que')	do_que
+======SC:np
+=======H:art('o' <artd> M S)	o
+=======N<:icl
+========P:vp
+=========MV:v-pcp('esperar' M S)	esperado
+==»
 =,
-=SUBJ:np
-==>N:art('o' <artd> M S)	o
-==H:n('poder' <np-def> M S)	poder
 =P:vp
-==MV:v-fin('cair' PS 3S IND)	caiu
-=PIV:pp
-==H:prp('em' <sam->)	em
+==MV:v-fin('dizer' <nosubj> PS 3S IND)	disse
+=ADVL:pp
+==H:prp('a')	a
 ==P<:np
-===>N:art('o' <-sam> <artd> F S)	a
-===H:n('rua' <np-def> F S)	rua
+===H:prop('Medeiros' M S)	Medeiros
+=ADVL:pp
+==H:prp('a' <sam->)	a
+==P<:icl
+===>N:art('o' <-sam> <artd> M S)	o
+===P:vp
+====MV:v-inf('cruzar' <icl-temp>)	cruzar
+===ACC:np
+====>N:art('o' <artd> F S)	a
+====H:n('linha' <np-def> F S)	linha
+====N<:pp
+=====H:prp('de')	de
+=====P<:np
+======H:n('chegada' <np-idf> F S)	chegada
 =.
 
 </s>

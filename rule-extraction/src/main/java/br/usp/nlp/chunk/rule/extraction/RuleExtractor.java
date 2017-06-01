@@ -65,7 +65,7 @@ public class RuleExtractor {
 					statement = normalizer.normalize(statement);
 				}
 
-				group(statement, node.getIndex());
+				group(statement, node.getSentence());
 				rules.add(statement);
 			}
 		});
@@ -73,7 +73,7 @@ public class RuleExtractor {
 		return rules;
 	}
 	
-	private void group(String statement, int index){
+	private void group(String statement, String sentence){
 		String rule = statement.substring(0, statement.indexOf(">") - 2).trim();
 		
 		try{
@@ -89,7 +89,7 @@ public class RuleExtractor {
 				rulesMap.put(rule, info);
 			}
 			
-			info.addRule(statement, index);
+			info.addRule(statement, sentence);
 		}
 		finally{
 			lock.unlock();
@@ -143,8 +143,6 @@ public class RuleExtractor {
 		List<Node> nodes = Collections.synchronizedList(new ArrayList<>());
 		
 		List<String> sentences = readSentences(sourceFile);
-		
-		final AtomicInteger position = new AtomicInteger(0);
 		
 		sentences.parallelStream().forEach(sentence -> {
 			Node node = new Node("SENTENCA", 0, extractSimpleSentence(sentence));
@@ -286,7 +284,7 @@ public class RuleExtractor {
 			return rule.replaceAll(", \\[.\\]", "");
 		};
 		
-		Set<String> rules = gen.generate("Bosque_CF_8.0.ad.treinamento.txt", 
+		Set<String> rules = gen.generate("Bosque_CF_8.0.ad.estudo.txt", 
 				                         filter, 
 				                         normalizer);
 		

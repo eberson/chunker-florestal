@@ -1,9 +1,8 @@
 package br.usp.nlp.chunk;
 
-import static br.usp.nlp.chunk.rule.extraction.Constants.REGEX_POTENTIAL_WORD;
-
+import java.util.Arrays;
 import java.util.Collections;
-import java.util.List;
+import java.util.Scanner;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -11,7 +10,6 @@ import br.usp.nlp.chunk.rule.extraction.Constants;
 import br.usp.nlp.chunk.rule.extraction.Normalizer;
 import br.usp.nlp.chunk.rule.extraction.RuleExtractor;
 import br.usp.nlp.chunk.rule.extraction.RuleFilter;
-import br.usp.nlp.chunk.rule.extraction.SentenceReader;
 
 public class Chunker {
 	
@@ -57,25 +55,53 @@ public class Chunker {
 		});
 	}
 	
-	public void evaluate(String text){
+	public String evaluate(String text){
+		text = text.replaceAll("\\s{2,}", " ");
+		String[] tokens = text.split("\\s");
+		
 		for(Rule rule : rules){
 			if (rule.match(text)){
-				System.out.printf("%s matches with rule %s\n", text, rule.getRule());
+				tokens = rule.resolve(text, tokens);
 			}
 		}
+		
+		StringBuilder result = new StringBuilder();
+		
+		Arrays.asList(tokens).stream().forEach(token -> {
+			result.append(token).append(" ");
+		});
+		
+		return makeNPPhrase(result.toString());
 	}
+	
+	private String makeNPPhrase(String rule) {
+		return rule.replaceAll("_" + Constants.REGEX_ONLY_GRAMATICAL, "")
+	               .replaceAll("\\[,\\]", ",")
+	               .replaceAll("_", " ")
+	               .replaceAll("\\s{1,}\\]", "]")
+	               .replaceAll("\\s{2,}", " ");
+	}
+	
+	
 
 
 
 	public static void main(String[] args) {
-		Chunker chunker = new Chunker("Bosque_CF_8.0.ad.reduzido.txt");
+		Chunker chunker = new Chunker("Bosque_CF_8.0.ad.txt");
 		
-		String entrada = "A_partir_de_prp agora_adv , a_art taxa_n deve_v-fin sempre_adv recuar_v-inf  .";
-		
-		chunker.evaluate(entrada);
-		
-		String target = "A_partir_de agora , np[a taxa] deve sempre recuar  .";
-		
+		try (Scanner scanner = new Scanner(System.in)) {
+			String entrada = "";
+
+			while (!entrada.equalsIgnoreCase("terminar")) {
+				System.out.print("Informe a frase \"taggeada\": ");
+				entrada = scanner.nextLine();
+				System.out.println(chunker.evaluate(entrada));
+
+				System.out.println("");
+				System.out.print("Informe continuar ou terminar (para encerrar o sistema): ");
+				entrada = scanner.nextLine();
+			}
+		}		
 	}
 
 }

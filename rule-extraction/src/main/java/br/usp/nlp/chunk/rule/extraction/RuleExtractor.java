@@ -4,11 +4,18 @@ import static br.usp.nlp.chunk.rule.extraction.Constants.LINE_SEPARATOR;
 import static br.usp.nlp.chunk.rule.extraction.Constants.PHRASE_TYPE_REGEX;
 import static br.usp.nlp.chunk.rule.extraction.Constants.SENTENCE_END;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -17,7 +24,11 @@ import br.usp.nlp.chunk.rule.extraction.identifiers.ValueRecognizerFactory;
 
 public class RuleExtractor {
 	
+	private final ReentrantLock lock = new ReentrantLock(true);
+	
 	private static final String LEVEL_REGEX = "={1,}";
+	
+	private Map<String, GenericRuleInfo> rulesMap =  Collections.synchronizedMap(new HashMap<>());
 	
 	public Set<String> generate(String sourceFile){
 		return generate(sourceFile, null);
@@ -42,30 +53,90 @@ public class RuleExtractor {
 			String[] generatedRules = generated.split(LINE_SEPARATOR);
 			
 			for (String rule : generatedRules) {
-				if (filter != null){
-					if (filter.accept(rule)){
-						if (normalizer != null){
-							rules.add(normalizer.normalize(rule));
-						}
-						else{
-							rules.add(rule);
-						}
-						
-					}
-					
-					continue;
-				}
+				String statement = rule;
 				
+				if (filter != null){
+					if (!filter.accept(statement)){
+						continue;
+					}
+				}
+
 				if (normalizer != null){
-					rules.add(normalizer.normalize(rule));
+					statement = normalizer.normalize(statement);
 				}
-				else{
-					rules.add(rule);
-				}
+
+				group(statement, node.getIndex());
+				rules.add(statement);
 			}
 		});
 		
 		return rules;
+	}
+	
+	private void group(String statement, int index){
+		String rule = statement.substring(0, statement.indexOf(">") - 2).trim();
+		
+		try{
+			lock.lock();
+			
+			GenericRuleInfo info;
+			
+			if (rulesMap.containsKey(rule)){
+				info = rulesMap.get(rule);
+			}
+			else{
+				info = new GenericRuleInfo(rule);
+				rulesMap.put(rule, info);
+			}
+			
+			info.addRule(statement, index);
+		}
+		finally{
+			lock.unlock();
+		}
+	}
+	
+	public void createEvaluation(String target){
+		createEvaluation(target, "ALL");
+	}
+
+	public void createEvaluation(String target, String expectedRule){
+		StringBuilder evaluation = new StringBuilder();
+		
+		if ("ALL".equals(expectedRule)){
+			for(GenericRuleInfo info : rulesMap.values()){
+				generateEvalution(evaluation, info);
+			}
+		}
+		else{
+			generateEvalution(evaluation, rulesMap.get(expectedRule));
+		}
+		
+		try {
+			Files.write(Paths.get(target), evaluation.toString().getBytes());
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	private void generateEvalution(StringBuilder evaluation, GenericRuleInfo info) {
+		int totalOccurrences = info.getOccurrences();
+		
+		evaluation.append("generic rule: ").append(info.getRule()).append(" (").append(totalOccurrences).append(")\n");
+		
+		for(RuleInfo rule : info.getOrderedRules()){
+			evaluation.append("\trule: ").append(rule.getRule()).append(" (").append(rule.getOccurrences()).append(")\n");
+			evaluation.append("\t\tfrequencia: ").append(String.format("%.9f", rule.getFrequence())).append("\n");
+			evaluation.append("\t\tstatements: ");
+			
+			for (String statement : rule.getStatements()){
+				evaluation.append("\t\t\t").append(statement).append("\n");
+			}
+			
+			evaluation.append("\n");
+		}
+		
+		evaluation.append("\n");
 	}
 	
 	public List<Node> createRuleNodes(String sourceFile){
@@ -73,13 +144,29 @@ public class RuleExtractor {
 		
 		List<String> sentences = readSentences(sourceFile);
 		
+		final AtomicInteger position = new AtomicInteger(0);
+		
 		sentences.parallelStream().forEach(sentence -> {
-			Node node = new Node("SENTENCA", 0);
+			Node node = new Node("SENTENCA", 0, extractSimpleSentence(sentence));
 			generateImpl(node, sentence);
 			nodes.add(node);
 		});
 		
 		return nodes;
+	}
+	
+	private synchronized String extractSimpleSentence(String sentence){
+		String[] parts = sentence.split("\\n");
+		
+		for (String part : parts) {
+			Matcher matcher = Pattern.compile("CF.*?\\s(.*)").matcher(part);
+			
+			if (matcher.find()){
+				return matcher.group(1);
+			}
+		}
+		
+		return "";
 	}
 
 	private Node generateImpl(Node rootNode, String sentence){
@@ -158,7 +245,6 @@ public class RuleExtractor {
 	
 	@SuppressWarnings("unused")
 	private void createRule(Node node) {
-//		print(node);
 		System.out.println(node.generateRule());
 	}
 	
@@ -183,8 +269,8 @@ public class RuleExtractor {
 			String content = rule.substring(rule.indexOf(">") + 1);
 			
 			String[] split = content.trim()
-					.replaceAll("\\[,\\]", "[@]")
-					.replaceAll("\\.", "").split(",");
+					                .replaceAll("\\[,\\]", "[@]")
+					                .replaceAll("\\.", "").split(",");
 			
 			for(String value : split){
 				if (!value.trim().matches(Constants.REGEX_ONLY_GRAMATICAL) &&
@@ -200,7 +286,7 @@ public class RuleExtractor {
 			return rule.replaceAll(", \\[.\\]", "");
 		};
 		
-		Set<String> rules = gen.generate("Bosque_CF_8.0.ad.txt", 
+		Set<String> rules = gen.generate("Bosque_CF_8.0.ad.treinamento.txt", 
 				                         filter, 
 				                         normalizer);
 		
@@ -209,5 +295,7 @@ public class RuleExtractor {
 				System.out.println(rule);
 			}
 		});
+		
+		gen.createEvaluation("C:\\java\\evaluation.txt", "np");
 	}
 }

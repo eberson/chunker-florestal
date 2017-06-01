@@ -7,17 +7,27 @@ import java.util.List;
 public class Node implements Serializable {
 
 	private static final long serialVersionUID = 1L;
-
+	
 	private Node parent;
 	private List<Node> children = new ArrayList<>();
 
 	private String value;
 	private int level;
+	private String sentence;
 
 	public Node(String value, int level) {
+		this(value, level, "");
+	}
+
+	public Node(String value, int level, String sentence) {
 		super();
 		this.value = value;
 		this.level = level;
+		this.sentence = sentence;
+	}
+
+	public String getSentence() {
+		return sentence;
 	}
 
 	public Node getParent() {

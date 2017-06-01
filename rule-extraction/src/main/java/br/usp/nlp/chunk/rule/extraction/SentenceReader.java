@@ -54,6 +54,28 @@ public class SentenceReader {
 			throw new RuntimeException(e);
 		}
 		
+		return result;
+	}
+	
+	public List<String> readSentences(String target, int... indexes){
+		SentenceReader reader = new SentenceReader();
+		List<String> sentences = reader.read(target);
+		List<String> result = new ArrayList<>();
+		
+		outer:for(int index : indexes){
+			String sentence = sentences.get(index);
+			
+			String[] parts = sentence.split("\\n");
+			
+			for (String part : parts) {
+				Matcher matcher = Pattern.compile("CF.*?\\s(.*)").matcher(part);
+				
+				if (matcher.find()){
+					result.add(matcher.group(1));
+					continue outer;
+				}
+			}
+		}
 		
 		return result;
 	}
@@ -89,30 +111,16 @@ public class SentenceReader {
 	}
 
 	public static void main(String[] args) {
-		
-//		SentenceReader reader = new SentenceReader();
-//		List<String> sentences = reader.read("Bosque_CF_8.0.ad.reduzido.txt");
+		SentenceReader reader = new SentenceReader();
+//		List<String> sentences = reader.read("Bosque_CF_8.0.ad.treinamento.txt");
 //		
 //		System.out.println(String.format("%d sentenças lidas", sentences.size()));
-//		System.out.println(sentences.get(0));
+//		System.out.println(sentences.get(500));		
 		
-		String[] values = { "=SUBJ:np",
-				            "==H:prop('PT' M S)	PT",
-				            "=SA:pp",
-				            "==H:prp('em' <sam->)	em",
-				            "==P<:np",
-				            "===>N:art('o' <-sam> <artd> M S)	o",
-				            "===H:n('governo' M S)	governo",};
+		reader.readSentences("Bosque_CF_8.0.ad.treinamento.txt", 
+				3657, 3658, 1901, 1902, 4736, 4737, 1469, 1470, 4302, 4303, 4086, 4087, 1703, 2593, 2594, 2611, 2612, 2633, 2634, 1292, 1293, 3079, 3080).stream().forEach(System.out::println);
 		
-		String regex = ":(prop|prp|art|n|v-pcp)\\(.*\\).*?([a-zA-Z]{1,})";
 		
-		for (String value : values) {
-			Matcher matcher = Pattern.compile(regex).matcher(value);
-			
-			if (matcher.find()){
-				System.out.printf("%s_%s ", matcher.group(2), matcher.group(1));
-			}
-		}
 	}
 
 }

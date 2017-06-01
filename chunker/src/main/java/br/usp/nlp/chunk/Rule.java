@@ -2,6 +2,9 @@ package br.usp.nlp.chunk;
 
 import static br.usp.nlp.chunk.rule.extraction.Constants.*;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 public class Rule implements Comparable<Rule> {
 	
 	private final String rule;
@@ -25,12 +28,64 @@ public class Rule implements Comparable<Rule> {
 				regex += " ";
 			}
 		}
-		
-		System.out.printf("%s ==> %s\n", rule, regex);
 	}
 	
 	public boolean match(String value){
 		return value.matches("^.*" + regex + ".*$");
+	}
+	
+	public String[] resolve(String phrase, String[] tokens){
+		
+		Matcher matcher = Pattern.compile(regex).matcher(phrase);
+		
+		
+		while (matcher.find()){
+			String group = matcher.group();
+
+			String[] groupedToken = group.split("\\s");
+
+			int start = 0;
+			int end = 0;
+
+			outer: for (int i = 0; i < tokens.length; i++) {
+				if (tokens[i].replaceAll("np\\[", "").replaceAll("\\]", "").trim()
+						.equalsIgnoreCase(groupedToken[0].replaceAll("np\\[", "").replaceAll("\\]", "").trim())) {
+					start = i;
+
+					if (groupedToken.length == 1) {
+						end = i;
+						
+						tokens[start] = "np[" + tokens[start];
+						tokens[end] = tokens[end] + "]";
+						
+						break;
+					}
+
+					int c = i + 1;
+
+					for (int j = 1; j < groupedToken.length; j++, c++) {
+						if (tokens[c].replaceAll("np\\[", "").replaceAll("\\]", "").trim()
+								.equalsIgnoreCase(groupedToken[j].replaceAll("np\\[", "").replaceAll("\\]", "").trim())) {
+							if (j == groupedToken.length - 1) {
+								end = c;
+
+								tokens[start] = "np[" + tokens[start];
+								tokens[end] = tokens[end] + "]";
+
+								break outer;
+							}
+
+							continue;
+						}
+
+						continue outer;
+					}
+				}
+			}
+		}
+		
+		
+		return tokens;
 	}
 	
 	public String getRule() {

@@ -2,6 +2,7 @@ package br.usp.nlp.chunk.rule.extraction;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class Node implements Serializable {
@@ -9,7 +10,7 @@ public class Node implements Serializable {
 	private static final long serialVersionUID = 1L;
 	
 	private Node parent;
-	private List<Node> children = new ArrayList<>();
+	private List<Node> children = Collections.synchronizedList(new ArrayList<>());
 
 	private String value;
 	private int level;

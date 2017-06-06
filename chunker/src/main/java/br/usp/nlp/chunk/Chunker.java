@@ -7,7 +7,7 @@ import java.util.Set;
 import java.util.TreeSet;
 
 import br.usp.nlp.chunk.rule.extraction.Constants;
-import br.usp.nlp.chunk.rule.extraction.Normalizer;
+import br.usp.nlp.chunk.rule.extraction.RuleNormalizer;
 import br.usp.nlp.chunk.rule.extraction.RuleExtractor;
 import br.usp.nlp.chunk.rule.extraction.RuleFilter;
 
@@ -19,6 +19,14 @@ public class Chunker {
 		super();
 		
 		buildRules();
+	}
+	
+	public Chunker(String... rules) {
+		super();
+		
+		Arrays.asList(rules).stream().forEach(rule -> {
+			this.rules.add(new Rule(rule));
+		});
 	}
 	
 	private void buildRules(){
@@ -39,7 +47,7 @@ public class Chunker {
 			return true;
 		};
 		
-		Normalizer normalizer = (rule) -> {
+		RuleNormalizer normalizer = (rule) -> {
 			return rule.replaceAll(", \\[.\\]", "");
 		};
 		
@@ -87,7 +95,18 @@ public class Chunker {
 
 
 	public static void main(String[] args) {
-		Chunker chunker = new Chunker("Bosque_CF_8.0.ad.txt");
+//		Chunker chunker = new Chunker("Bosque_CF_8.0.ad.avaliacao.txt");
+		Chunker chunker = new Chunker("np --> art, n.",
+									  "np --> prop.",
+									  "np --> n.",
+									  "np --> art, prop.",
+									  "np --> pron-indp.",
+									  "np --> pron-pers.",
+									  "np --> art, n, adj.",
+									  "np --> num, n.",
+									  "np --> pron-det, n.",
+									  "np --> n, adj.",
+									  "np --> art, adj, n.");
 		
 		try (Scanner scanner = new Scanner(System.in)) {
 			String entrada = "";

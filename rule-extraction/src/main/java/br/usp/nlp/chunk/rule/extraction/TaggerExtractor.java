@@ -2,6 +2,7 @@ package br.usp.nlp.chunk.rule.extraction;
 
 import static br.usp.nlp.chunk.rule.extraction.Constants.LINE_SEPARATOR;
 import static br.usp.nlp.chunk.rule.extraction.Constants.PHRASE_TYPE_REGEX;
+import static br.usp.nlp.chunk.rule.extraction.Constants.REGEX_SENTENCE_FORM_ONLY;
 import static br.usp.nlp.chunk.rule.extraction.Constants.SENTENCE_END;
 
 import java.io.IOException;
@@ -78,8 +79,7 @@ public class TaggerExtractor {
 		
 		sentences.parallelStream().forEach(sentence -> {
 			Node node = new Node("SENTENCA", 0);
-			generateImpl(node, sentence);
-			nodes.add(node);
+			nodes.add(generateImpl(node, sentence));
 		});
 		
 		return nodes;
@@ -134,7 +134,26 @@ public class TaggerExtractor {
 			}
 		}
 		
-		return rootNode;
+		return normalize(rootNode);
+	}
+	
+	private Node normalize(Node rootNode) {	
+		Node result = new Node(rootNode.getValue(), rootNode.getLevel(), rootNode.getSentence());
+		
+		for(Node node : rootNode.getChildren()){
+			if (node.getValue().matches(REGEX_SENTENCE_FORM_ONLY)){
+				for(Node child : node.getChildren()){
+					result.addChild(normalize(child));
+				}
+				
+				continue;
+			}
+			
+			result.addChild(normalize(node));
+		}
+		
+		return result;
+		
 	}
 	
 	private int getLevel(String line){
@@ -167,7 +186,7 @@ public class TaggerExtractor {
 	public static void main(String[] args) {
 		TaggerExtractor gen = new TaggerExtractor();
 		
-        gen.createCorpus("Bosque_CF_8.0.ad.txt");
+        gen.createCorpus("Bosque_CF_8.0.ad.avaliacao.txt");
 		
 //		Set<String> rules = gen.generate("Bosque_CF_8.0.ad.txt");
 //		

@@ -17,6 +17,7 @@ public final class ValueRecognizerFactory {
 			ALL_RECOGNIZERS.add(new Syntagma());
 			ALL_RECOGNIZERS.add(new GramaticalCategory());
 			ALL_RECOGNIZERS.add(new PunctuationCategory());
+			ALL_RECOGNIZERS.add(new SentenceForm());
 		}
 		
 		return ALL_RECOGNIZERS;
@@ -27,6 +28,7 @@ public final class ValueRecognizerFactory {
 			TAGGER_RECOGNIZERS.add(new Syntagma());
 			TAGGER_RECOGNIZERS.add(new GramaticalTagger());
 			TAGGER_RECOGNIZERS.add(new PunctuationCategory());
+			TAGGER_RECOGNIZERS.add(new SentenceForm());
 		}
 		
 		return TAGGER_RECOGNIZERS;

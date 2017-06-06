@@ -2,6 +2,7 @@ package br.usp.nlp.chunk.rule.extraction;
 
 import static br.usp.nlp.chunk.rule.extraction.Constants.LINE_SEPARATOR;
 import static br.usp.nlp.chunk.rule.extraction.Constants.PHRASE_TYPE_REGEX;
+import static br.usp.nlp.chunk.rule.extraction.Constants.*;
 import static br.usp.nlp.chunk.rule.extraction.Constants.SENTENCE_END;
 
 import java.io.IOException;
@@ -14,7 +15,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -38,13 +38,17 @@ public class RuleExtractor {
 		return generate(sourceFile, null, null);
 	}
 
-	public Set<String> generate(String sourceFile, RuleFilter filter, Normalizer normalizer){
+	public Set<String> generate(String sourceFile, RuleFilter filter, RuleNormalizer normalizer){
+		return generate(sourceFile, filter, normalizer, null);
+	}
+	
+	public Set<String> generate(String sourceFile, RuleFilter filter, RuleNormalizer ruleNormalizer, NodeNormalizer nodeNormalizer){
 		Set<String> rules = Collections.synchronizedSet(new TreeSet<>());
 		
 		List<Node> nodes = createRuleNodes(sourceFile);
 		
 		nodes.parallelStream().forEach(node -> {
-			String generated = node.generateRule();
+			String generated = (nodeNormalizer != null ? nodeNormalizer.normalize(node) : node).generateRule();
 			
 			if (generated == null || generated.isEmpty()){
 				return;
@@ -61,8 +65,8 @@ public class RuleExtractor {
 					}
 				}
 
-				if (normalizer != null){
-					statement = normalizer.normalize(statement);
+				if (ruleNormalizer != null){
+					statement = ruleNormalizer.normalize(statement);
 				}
 
 				group(statement, node.getSentence());
@@ -101,15 +105,19 @@ public class RuleExtractor {
 	}
 
 	public void createEvaluation(String target, String expectedRule){
+		createEvaluation(target, expectedRule, true);
+	}
+
+	public void createEvaluation(String target, String expectedRule, boolean complete){
 		StringBuilder evaluation = new StringBuilder();
 		
 		if ("ALL".equals(expectedRule)){
 			for(GenericRuleInfo info : rulesMap.values()){
-				generateEvalution(evaluation, info);
+				generateEvalution(evaluation, info, complete);
 			}
 		}
 		else{
-			generateEvalution(evaluation, rulesMap.get(expectedRule));
+			generateEvalution(evaluation, rulesMap.get(expectedRule), complete);
 		}
 		
 		try {
@@ -119,18 +127,21 @@ public class RuleExtractor {
 		}
 	}
 
-	private void generateEvalution(StringBuilder evaluation, GenericRuleInfo info) {
+	private void generateEvalution(StringBuilder evaluation, GenericRuleInfo info, boolean complete) {
 		int totalOccurrences = info.getOccurrences();
 		
 		evaluation.append("generic rule: ").append(info.getRule()).append(" (").append(totalOccurrences).append(")\n");
 		
 		for(RuleInfo rule : info.getOrderedRules()){
 			evaluation.append("\trule: ").append(rule.getRule()).append(" (").append(rule.getOccurrences()).append(")\n");
-			evaluation.append("\t\tfrequencia: ").append(String.format("%.9f", rule.getFrequence())).append("\n");
-			evaluation.append("\t\tstatements: ");
+			evaluation.append("\t\tfrequencia: ").append(String.format("%.9f", rule.getFrequence())).append("%\n");
 			
-			for (String statement : rule.getStatements()){
-				evaluation.append("\t\t\t").append(statement).append("\n");
+			if (complete){
+				evaluation.append("\t\tstatements:\n");
+				
+				for (String statement : rule.getStatements()){
+					evaluation.append("\t\t\t").append(statement).append("\n");
+				}
 			}
 			
 			evaluation.append("\n");
@@ -146,8 +157,10 @@ public class RuleExtractor {
 		
 		sentences.parallelStream().forEach(sentence -> {
 			Node node = new Node("SENTENCA", 0, extractSimpleSentence(sentence));
-			generateImpl(node, sentence);
-			nodes.add(node);
+			nodes.add(generateImpl(node, sentence));
+
+//			generateImpl(node, sentence);
+//			nodes.add(node);
 		});
 		
 		return nodes;
@@ -216,9 +229,30 @@ public class RuleExtractor {
 			}
 		}
 		
-		return rootNode;
+		return normalize(rootNode);
+		
+//		return rootNode;
 	}
 	
+	private Node normalize(Node rootNode) {	
+		Node result = new Node(rootNode.getValue(), rootNode.getLevel(), rootNode.getSentence());
+		
+		for(Node node : rootNode.getChildren()){
+			if (node.getValue().matches(REGEX_SENTENCE_FORM_ONLY)){
+				for(Node child : node.getChildren()){
+					result.addChild(normalize(child));
+				}
+				
+				continue;
+			}
+			
+			result.addChild(normalize(node));
+		}
+		
+		return result;
+		
+	}
+
 	private int getLevel(String line){
 		Matcher matcher = Pattern.compile(LEVEL_REGEX).matcher(line);
 		
@@ -280,13 +314,36 @@ public class RuleExtractor {
 			return true;
 		};
 		
-		Normalizer normalizer = (rule) -> {
+		RuleNormalizer normalizer = (rule) -> {
 			return rule.replaceAll(", \\[.\\]", "");
 		};
 		
-		Set<String> rules = gen.generate("Bosque_CF_8.0.ad.estudo.txt", 
+		NodeNormalizer nodeNormalizer = new NodeNormalizer() {
+			
+			@Override
+			public Node normalize(Node n) {
+				Node result = new Node(n.getValue(), n.getLevel(), n.getSentence());
+				
+				for(Node node : n.getChildren()){
+					if (node.getValue().matches(REGEX_SYNTAGMAS_EXCEPT_NP)){
+						for(Node child : node.getChildren()){
+							result.addChild(normalize(child));
+						}
+						
+						continue;
+					}
+					
+					result.addChild(normalize(node));
+				}
+				
+				return result;
+			}
+		};
+		
+		Set<String> rules = gen.generate("Bosque_CF_8.0.ad.treinamento.txt", 
 				                         filter, 
-				                         normalizer);
+				                         normalizer,
+				                         nodeNormalizer);
 		
 		rules.stream().forEach(rule -> {
 			if (rule.startsWith("np -->")){
@@ -294,6 +351,7 @@ public class RuleExtractor {
 			}
 		});
 		
-		gen.createEvaluation("C:\\java\\evaluation.txt", "np");
+		gen.createEvaluation("C:\\java\\evaluation-complete.txt", "np");
+		gen.createEvaluation("C:\\java\\evaluation-reduzida.txt", "np", false);
 	}
 }

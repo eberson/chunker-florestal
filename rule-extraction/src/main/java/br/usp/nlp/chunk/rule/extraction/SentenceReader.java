@@ -34,7 +34,7 @@ public class SentenceReader {
 					return;
 				}
 				
-				if (line.contains(SENTENCE_START)){
+				if (line.matches(SENTENCE_START)){
 					maker.start().include(line);
 					return;
 				}

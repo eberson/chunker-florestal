@@ -6,7 +6,7 @@ public final class Constants {
 		super();
 	}
 	
-	public static final String SENTENCE_START = "<s>";
+	public static final String SENTENCE_START = "<s.*>";
 	public static final String SENTENCE_END = "</s>|&&|=\\.";
 	
 	public static final String LINE_SEPARATOR = System.getProperty("line.separator");

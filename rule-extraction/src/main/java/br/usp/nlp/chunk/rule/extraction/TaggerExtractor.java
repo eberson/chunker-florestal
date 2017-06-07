@@ -23,7 +23,7 @@ public class TaggerExtractor {
 	
 	private static final String LEVEL_REGEX = "={1,}";
 	
-	public void createCorpus(String sourceFile){
+	public void createCorpus(String sourceFile, String resultAnnotated, String resultTagged){
 		Set<String> rules = generate(sourceFile);
 		
 		StringBuilder taggedPhrase = new StringBuilder();
@@ -35,8 +35,8 @@ public class TaggerExtractor {
 		}
 		
 		try {
-			Files.write(Paths.get("C:/java/tagged_phrase.txt"), taggedPhrase.toString().getBytes());
-			Files.write(Paths.get("C:/java/np_phrase.txt"), npPhrase.toString().getBytes());
+			Files.write(Paths.get(resultTagged), taggedPhrase.toString().getBytes());
+			Files.write(Paths.get(resultAnnotated), npPhrase.toString().getBytes());
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
@@ -186,8 +186,10 @@ public class TaggerExtractor {
 	public static void main(String[] args) {
 		TaggerExtractor gen = new TaggerExtractor();
 		
-        gen.createCorpus("Bosque_CF_8.0.ad.avaliacao.txt");
-		
+        //gen.createCorpus("Bosque_CF_8.0.ad.avaliacao.txt", "C:/java/tagged_phrase.txt", "C:/java/np_phrase.txt");
+        gen.createCorpus("FlorestaVirgem_CF_3.0.ad.txt", "C:/java/fv_tagged_phrase.txt", "C:/java/fv_np_phrase.txt");
+        
+        
 //		Set<String> rules = gen.generate("Bosque_CF_8.0.ad.txt");
 //		
 //		rules.stream().forEach(System.out::println);

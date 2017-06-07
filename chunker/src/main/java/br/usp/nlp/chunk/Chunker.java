@@ -7,9 +7,9 @@ import java.util.Set;
 import java.util.TreeSet;
 
 import br.usp.nlp.chunk.rule.extraction.Constants;
-import br.usp.nlp.chunk.rule.extraction.RuleNormalizer;
 import br.usp.nlp.chunk.rule.extraction.RuleExtractor;
 import br.usp.nlp.chunk.rule.extraction.RuleFilter;
+import br.usp.nlp.chunk.rule.extraction.RuleNormalizer;
 
 public class Chunker {
 	
@@ -90,9 +90,6 @@ public class Chunker {
 	               .replaceAll("\\s{2,}", " ");
 	}
 	
-	
-
-
 
 	public static void main(String[] args) {
 //		Chunker chunker = new Chunker("Bosque_CF_8.0.ad.avaliacao.txt");

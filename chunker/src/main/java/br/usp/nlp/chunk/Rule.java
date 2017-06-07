@@ -101,6 +101,6 @@ public class Rule implements Comparable<Rule> {
 			return rule.compareTo(o.rule);
 		}
 		
-		return otherValue.compareTo(myValue);
+		return myValue.compareTo(otherValue);
 	}
 }

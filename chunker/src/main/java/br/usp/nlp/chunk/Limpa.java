@@ -1,12 +1,10 @@
 package br.usp.nlp.chunk;
 
-import java.io.IOException;
 import java.net.URI;
-import java.net.URISyntaxException;
-import java.nio.charset.Charset;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
@@ -18,40 +16,69 @@ public class Limpa {
 	public static void main(String[] args) throws Exception {
 		ClassLoader cl = RuleExtractor.class.getClassLoader();
 		URI uri = cl.getResource("avaliacao.txt").toURI();
-		
-		StringBuilder resultado = new StringBuilder();
-		
-		try(Stream<String> stream = Files.lines(Paths.get(uri))){
+
+//		StringBuilder resultado = new StringBuilder();
+
+		try (Stream<String> stream = Files.lines(Paths.get(uri))) {
 			stream.forEach(line -> {
-				resultado.append(limpa(line)).append("\n");
+				List<String> ngramas = new ArrayList<>();
+				
+				limpa(ngramas, line);
+				
+				ngramas.stream().forEach(System.out::println);
 			});
 		}
-		
-		try {
-			Files.write(Paths.get("C:/java/avaliacao_corrigida.txt"), resultado.toString().getBytes());
-		} catch (IOException e) {
-			throw new RuntimeException(e);
-		}
+
+//		try {
+//			Files.write(Paths.get("C:/java/avaliacao_corrigida.txt"), resultado.toString().getBytes());
+//		} catch (IOException e) {
+//			throw new RuntimeException(e);
+//		}
 	}
 
-	public static String limpa(String sentenca) {
+	public static String limpa(List<String> ngramas, String sentenca) {
+		String retorno = sentenca;
+		String pattern = "(.*np\\[[^\\]]*)(np\\[[^\\]]*\\])(.*\\].*)";
+		Pattern r = Pattern.compile(pattern);
+		Matcher m = r.matcher(sentenca);
+		
+		if (m.find()) {
+			ngramas.add(m.group(2));
+			retorno = m.group(1) + m.group(2).replaceAll("np\\[", "").replaceAll("\\]", "") + m.group(3);
+			retorno = limpa(ngramas, retorno);
+		} else {
+			String pattern2 = "(np\\[[^\\]]*\\])";
+			Pattern r2 = Pattern.compile(pattern2);
+			Matcher m2 = r2.matcher(sentenca);
+			
+			while (m2.find()) {
+				ngramas.add(m2.group(1));
+			}
+		}
+		
+		return retorno;
+	}
+	
+	public static String limpaFuncionando(String sentenca) {
 		String retorno = sentenca;
 		String pattern = "(.*np\\[[^\\]]*)(np\\[[^\\]]*\\])(.*\\].*)";
 		Pattern r = Pattern.compile(pattern);
 		Matcher m = r.matcher(sentenca);
 
 		if (m.find()) {
-			// System.out.println("Found value: " + m.group(0));
-//			System.out.println("um: " + m.group(1));
-//			System.out.println("dois: " + m.group(2));
-//			System.out.println("tres: " + m.group(3));
-
+			System.out.println(m.group(2));
 			retorno = m.group(1) + m.group(2).replaceAll("np\\[", "").replaceAll("\\]", "") + m.group(3);
-			System.out.println("----------------------------" + retorno);
-			retorno = limpa(retorno);
+			retorno = limpaFuncionando(retorno);
 		} else {
-			System.out.println("NO MATCH");
+			String pattern2 = "(np\\[[^\\]]*\\])";
+			Pattern r2 = Pattern.compile(pattern2);
+			Matcher m2 = r2.matcher(sentenca);
+
+			while (m2.find()) {
+				System.out.println(m2.group(1));
+			}
 		}
+
 		return retorno;
 	}
 }
